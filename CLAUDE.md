@@ -34,7 +34,7 @@ src/summarizer/
 ## Key Paths
 
 - Work journal source: `~/code_directory_top/_meta/work-journal/`
-- Anthropic API key: `~/.secrets/anthropic-api-key.txt`
+- Anthropic API key: `~/.secrets/anthropic-key-api.txt`
 - Gmail OAuth credentials: `./credentials/client_secret.json`
 - Gmail tokens: `./credentials/gmail_token.json`
 - Config: `./config/config.yaml`
