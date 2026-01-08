@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# uv
+.uv/
+uv.lock
+
+# Credentials (OAuth tokens, client secrets)
+credentials/*.json
+
+# Local config (may contain email addresses, paths)
+config/config.yaml
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
