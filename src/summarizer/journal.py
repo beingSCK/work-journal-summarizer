@@ -11,6 +11,9 @@ import re  # Regular expressions for pattern matching in strings
 from datetime import date, timedelta  # date = calendar date, timedelta = duration between dates
 from pathlib import Path  # Object-oriented filesystem paths (modern replacement for os.path)
 
+# Import our config system for journal path
+from . import config
+
 
 def get_journal_path() -> Path:
     """
@@ -19,10 +22,12 @@ def get_journal_path() -> Path:
     Syntax notes:
     - `-> Path` is a "return type hint" - tells readers/tools this function returns a Path object
     - Type hints don't enforce anything at runtime; they're documentation that tools can check
-    - Path.home() returns the user's home directory as a Path object
-    - The `/` operator is overloaded on Path objects to join path segments (cleaner than os.path.join)
+    - The path comes from config, making it customizable
+
+    Returns:
+        Path to the work journal directory
     """
-    return Path.home() / "code_directory_top" / "_meta" / "work-journal"
+    return config.get_journal_path()
 
 
 def parse_date_from_filename(filename: str) -> date | None:
