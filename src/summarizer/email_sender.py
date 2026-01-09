@@ -110,6 +110,7 @@ def get_token_path() -> Path:
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",      # Send emails
     "https://www.googleapis.com/auth/gmail.readonly",  # Read emails (for reply processing)
+    "https://www.googleapis.com/auth/gmail.modify",    # Mark messages as read
 ]
 
 
