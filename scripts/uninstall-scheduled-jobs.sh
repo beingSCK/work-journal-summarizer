@@ -32,12 +32,14 @@ echo "Uninstalling work-journal-summarizer launchd jobs..."
 echo "Unloading jobs..."
 launchctl unload "$LAUNCH_AGENTS/com.sck.work-journal-summarizer.plist" 2>/dev/null || true
 launchctl unload "$LAUNCH_AGENTS/com.sck.work-journal-summarizer-replies.plist" 2>/dev/null || true
+launchctl unload "$LAUNCH_AGENTS/com.das.heartbeat.plist" 2>/dev/null || true
 
 # Remove the plist files
 # - rm -f removes files without error if they don't exist
 echo "Removing plist files..."
 rm -f "$LAUNCH_AGENTS/com.sck.work-journal-summarizer.plist"
 rm -f "$LAUNCH_AGENTS/com.sck.work-journal-summarizer-replies.plist"
+rm -f "$LAUNCH_AGENTS/com.das.heartbeat.plist"
 
 echo ""
 echo "Uninstallation complete!"

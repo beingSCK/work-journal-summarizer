@@ -17,7 +17,8 @@ import sys  # System-specific parameters and functions (like sys.exit)
 # Import from our sibling modules using relative imports
 # The dot (.) means "from the current package"
 from .email_sender import send_summary_email
-from .journal import gather_entries, get_journal_path, needs_summary
+from .heartbeat import run_heartbeat
+from .journal import gather_entries, needs_summary
 from .reply_processor import process_replies
 from .summarize import generate_summary, save_draft
 
@@ -79,6 +80,14 @@ def parse_args() -> argparse.Namespace:
         help="Check for and process replies to summary emails (run hourly via launchd).",
     )
 
+    # --heartbeat runs the daily heartbeat mode
+    # This sends a daily email with yesterday's work summary + fun fact
+    parser.add_argument(
+        "--heartbeat",
+        action="store_true",
+        help="Run daily heartbeat: auto-wrapup stale checkpoints, send status email (run at 1am via launchd).",
+    )
+
     return parser.parse_args()
 
 
@@ -103,17 +112,19 @@ def main() -> int:
         processed = process_replies()
         return 0 if processed >= 0 else 1
 
-    journal_path = get_journal_path()
+    # Handle --heartbeat mode (daily heartbeat with auto-wrapup)
+    if args.heartbeat:
+        return run_heartbeat()
 
     # Check if we need to generate a summary
-    if not args.force and not needs_summary(journal_path, args.days):
+    if not args.force and not needs_summary(args.days):
         print(f"A summary was generated within the last {args.days} days. Skipping.")
         print("Use --force to generate anyway.")
         return 0
 
     # Gather entries from the lookback period
     print(f"Gathering entries from the last {args.days} days...")
-    entries = gather_entries(journal_path, args.days)
+    entries = gather_entries(lookback_days=args.days)
 
     if not entries:
         print("No journal entries found in the specified period.")
@@ -146,8 +157,8 @@ def main() -> int:
         print(f"Error calling Claude API: {e}")
         return 1
 
-    # Save the draft
-    draft_path = save_draft(summary, journal_path, entries)
+    # Save the draft to periodic-summaries/
+    draft_path = save_draft(summary, entries)
     print(f"\nDraft saved to: {draft_path}")
 
     # Print a preview of the summary
