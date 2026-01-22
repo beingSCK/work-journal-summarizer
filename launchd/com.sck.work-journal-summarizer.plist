@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    launchd Configuration for Work Journal Summarizer
+    ==================================================
+
+    What is launchd?
+    - macOS's native task scheduler (replaces cron on older Unix systems)
+    - Runs as a system service, manages background jobs
+    - More reliable than cron: handles sleep/wake, retries on failure
+
+    Why this file format?
+    - Property List (plist) is Apple's XML-based config format
+    - Used throughout macOS for preferences and configurations
+    - Verbose but explicit - every setting is clearly named
+
+    Naming convention: com.sck.work-journal-summarizer
+    - "Reverse DNS" style: domain.owner.project
+    - Prevents naming conflicts between different apps/developers
+    - com = commercial, sck = your identifier, then project name
+    - This is convention, not a requirement - Apple recommends it
+
+    How to use this file:
+    1. Copy to ~/Library/LaunchAgents/
+    2. Load with: launchctl load ~/Library/LaunchAgents/com.sck.work-journal-summarizer.plist
+    3. Unload with: launchctl unload ~/Library/LaunchAgents/com.sck.work-journal-summarizer.plist
+
+    Where jobs run:
+    - ~/Library/LaunchAgents/ = User-level jobs (run when YOU log in)
+    - /Library/LaunchAgents/ = System-wide, run for any user
+    - /Library/LaunchDaemons/ = System-level, run even when no one logged in
+-->
+<plist version="1.0">
+<dict>
+    <!-- Label: Unique identifier for this job (must match filename) -->
+    <key>Label</key>
+    <string>com.sck.work-journal-summarizer</string>
+
+    <!--
+        ProgramArguments: The command to run
+        - Array of strings, first is the executable, rest are arguments
+        - Must use absolute paths (launchd doesn't have your shell's PATH)
+        - We use the full path to uv to ensure it's found
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <!-- Full path to uv (installed by Homebrew typically) -->
+        <string>/Users/seanckeegan/.local/bin/uv</string>
+        <string>run</string>
+        <string>python</string>
+        <string>-m</string>
+        <string>summarizer</string>
+    </array>
+
+    <!--
+        WorkingDirectory: Where to run the command from
+        - Important because we need to be in the project directory
+        - The uv command needs to find pyproject.toml
+    -->
+    <key>WorkingDirectory</key>
+    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
+
+    <!--
+        EnvironmentVariables: Set environment for the job
+        - PYTHONPATH tells Python where to find our src/ directory
+        - Without this, imports would fail
+    -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
+    </dict>
+
+    <!--
+        StartCalendarInterval: When to run (like cron, but structured)
+        - Hour: 10 = 10:00 AM (24-hour format)
+        - Minute: 0 = on the hour
+        - Other options: Weekday (0=Sunday), Day (1-31), Month (1-12)
+        - Missing keys = wildcard (every day, every month, etc.)
+    -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>10</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!--
+        StandardOutPath / StandardErrorPath: Where to log output
+        - These capture print() statements and error messages
+        - Useful for debugging if something goes wrong
+        - Check with: tail -f ~/Library/Logs/work-journal-summarizer.log
+    -->
+    <key>StandardOutPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+
+    <!--
+        RunAtLoad: Run immediately when the job is loaded?
+        - false = Only run at scheduled time
+        - true = Run now AND at scheduled times
+        - We use false to avoid surprising immediate runs during testing
+    -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!--
+        Nice: Process priority (lower = higher priority)
+        - Range: -20 (highest) to 20 (lowest)
+        - 10 = low priority, won't slow down your other work
+        - This is a background task, no need to rush
+    -->
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>

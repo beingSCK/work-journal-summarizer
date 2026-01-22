@@ -15,26 +15,37 @@ from pathlib import Path
 # Installed via: uv add anthropic
 import anthropic
 
+# Import our config system for paths and model settings
+from . import config
+
 
 def get_anthropic_key() -> str:
     """
     Read the Anthropic API key from the secrets file.
 
     Syntax notes:
-    - Path.home() returns your home directory as a Path object
+    - config.get_shared_secrets_path() returns the path from configuration
+    - This makes the path configurable rather than hardcoded
     - .read_text() reads the entire file as a string
     - .strip() removes leading/trailing whitespace (including newlines)
 
     The key file should contain just the key, nothing else:
         sk-ant-api03-xxxxx...
 
+    Secrets organization:
+    - ~/.secrets/shared/ contains credentials used by multiple projects
+    - ~/.secrets/{project}/ contains project-specific credentials
+    - See ~/.secrets/README.md for the full pattern
+
     Returns:
         The API key as a string.
 
     Raises:
-        FileNotFoundError: If ~/.secrets/anthropic-key-api.txt doesn't exist.
+        FileNotFoundError: If the anthropic-api-key.txt file doesn't exist.
     """
-    key_path = Path.home() / ".secrets" / "anthropic-key-api.txt"
+    # The API key lives in shared/ because multiple projects may use it
+    # Path comes from config so it's not hardcoded
+    key_path = config.get_shared_secrets_path() / "anthropic-api-key.txt"
     return key_path.read_text().strip()
 
 
@@ -119,22 +130,21 @@ Now generate the summary following the format above. Focus on synthesis and patt
 
 def generate_summary(
     entries: list[dict],
-    model: str = "claude-sonnet-4-20250514",
-    max_tokens: int = 4096,
+    model: str | None = None,
+    max_tokens: int | None = None,
 ) -> str:
     """
     Call the Claude API to generate a summary of journal entries.
 
     Syntax notes:
-    - Function parameters can have default values (model="...", max_tokens=4096)
-    - Parameters with defaults must come after parameters without defaults
-    - anthropic.Anthropic() creates a client; it reads ANTHROPIC_API_KEY env var
-      or we can pass api_key= explicitly (which we do here)
+    - Parameters default to None, then we read from config
+    - This pattern allows: config defaults < function defaults < explicit args
+    - `str | None` means the parameter can be a string or None (Python 3.10+)
 
     Args:
         entries: List of journal entry dicts from gather_entries().
-        model: The Claude model to use. Defaults to Claude Sonnet 4.
-        max_tokens: Maximum tokens in the response.
+        model: The Claude model to use. Defaults to config value.
+        max_tokens: Maximum tokens in the response. Defaults to config value.
 
     Returns:
         The generated summary as a string.
@@ -143,6 +153,13 @@ def generate_summary(
         anthropic.APIError: If the API call fails.
         FileNotFoundError: If the API key file doesn't exist.
     """
+    # Use config values if not explicitly provided
+    # This is a common pattern: function param overrides config overrides default
+    if model is None:
+        model = config.get("anthropic.summary_model")
+    if max_tokens is None:
+        max_tokens = config.get("anthropic.max_tokens")
+
     # Create the API client with our key
     # We pass the key explicitly rather than using environment variables
     # to keep our secrets management pattern consistent
@@ -172,9 +189,9 @@ def generate_summary(
     return message.content[0].text
 
 
-def save_draft(summary: str, journal_path: Path, entries: list[dict]) -> Path:
+def save_draft(summary: str, entries: list[dict], summaries_path: Path | None = None) -> Path:
     """
-    Save the summary as a draft file in the journal directory.
+    Save the summary as a draft file in the periodic-summaries directory.
 
     Syntax notes:
     - Path objects support / operator for joining paths
@@ -183,16 +200,22 @@ def save_draft(summary: str, journal_path: Path, entries: list[dict]) -> Path:
 
     Args:
         summary: The generated summary text.
-        journal_path: Path to the work-journal directory.
         entries: The entries that were summarized (to get the date range).
+        summaries_path: Override the default summaries location (useful for testing).
 
     Returns:
         The Path to the saved draft file.
     """
+    if summaries_path is None:
+        summaries_path = config.get_summaries_path()
+
+    # Ensure the summaries directory exists
+    summaries_path.mkdir(parents=True, exist_ok=True)
+
     # Use today's date for the filename (when the summary was generated)
     today = date.today().isoformat()
     filename = f"{today}-SUMMARY-14-days-DRAFT.md"
-    draft_path = journal_path / filename
+    draft_path = summaries_path / filename
 
     draft_path.write_text(summary)
     return draft_path

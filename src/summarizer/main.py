@@ -6,7 +6,7 @@ This module orchestrates the full flow:
 2. Gather journal entries
 3. Generate summary via Claude API
 4. Save the draft
-5. (Future: send email notification)
+5. Send email notification for review
 
 Run with: uv run python -m summarizer
 """
@@ -16,7 +16,10 @@ import sys  # System-specific parameters and functions (like sys.exit)
 
 # Import from our sibling modules using relative imports
 # The dot (.) means "from the current package"
-from .journal import gather_entries, get_journal_path, needs_summary
+from .email_sender import send_summary_email
+from .heartbeat import run_heartbeat
+from .journal import gather_entries, needs_summary
+from .reply_processor import process_replies
 from .summarize import generate_summary, save_draft
 
 
@@ -62,6 +65,29 @@ def parse_args() -> argparse.Namespace:
         help="Generate summary even if a recent one exists.",
     )
 
+    # --no-email skips sending the email (useful for testing)
+    parser.add_argument(
+        "--no-email",
+        action="store_true",
+        help="Skip sending email notification (just save draft locally).",
+    )
+
+    # --check-replies runs in "reply processing" mode instead of summary mode
+    # This is a separate mode - it doesn't generate summaries, just processes replies
+    parser.add_argument(
+        "--check-replies",
+        action="store_true",
+        help="Check for and process replies to summary emails (run hourly via launchd).",
+    )
+
+    # --heartbeat runs the daily heartbeat mode
+    # This sends a daily email with yesterday's work summary + fun fact
+    parser.add_argument(
+        "--heartbeat",
+        action="store_true",
+        help="Run daily heartbeat: auto-wrapup stale checkpoints, send status email (run at 1am via launchd).",
+    )
+
     return parser.parse_args()
 
 
@@ -78,17 +104,27 @@ def main() -> int:
         Exit code (0 for success, 1 for error).
     """
     args = parse_args()
-    journal_path = get_journal_path()
+
+    # Handle --check-replies mode (separate from summary generation)
+    # This mode processes email replies and doesn't generate summaries
+    if args.check_replies:
+        print("Running in reply-processing mode...")
+        processed = process_replies()
+        return 0 if processed >= 0 else 1
+
+    # Handle --heartbeat mode (daily heartbeat with auto-wrapup)
+    if args.heartbeat:
+        return run_heartbeat()
 
     # Check if we need to generate a summary
-    if not args.force and not needs_summary(journal_path, args.days):
+    if not args.force and not needs_summary(args.days):
         print(f"A summary was generated within the last {args.days} days. Skipping.")
         print("Use --force to generate anyway.")
         return 0
 
     # Gather entries from the lookback period
     print(f"Gathering entries from the last {args.days} days...")
-    entries = gather_entries(journal_path, args.days)
+    entries = gather_entries(lookback_days=args.days)
 
     if not entries:
         print("No journal entries found in the specified period.")
@@ -111,8 +147,9 @@ def main() -> int:
     try:
         summary = generate_summary(entries)
     except FileNotFoundError:
-        print("Error: API key not found at ~/.secrets/anthropic-key-api.txt")
+        print("Error: API key not found at ~/.secrets/shared/anthropic-api-key.txt")
         print("Please create this file with your Anthropic API key.")
+        print("See ~/.secrets/README.md for the secrets organization pattern.")
         return 1
     except Exception as e:
         # Catch-all for API errors
@@ -120,8 +157,8 @@ def main() -> int:
         print(f"Error calling Claude API: {e}")
         return 1
 
-    # Save the draft
-    draft_path = save_draft(summary, journal_path, entries)
+    # Save the draft to periodic-summaries/
+    draft_path = save_draft(summary, entries)
     print(f"\nDraft saved to: {draft_path}")
 
     # Print a preview of the summary
@@ -131,6 +168,24 @@ def main() -> int:
     print(summary[:500])
     if len(summary) > 500:
         print(f"\n... ({len(summary) - 500} more characters)")
+
+    # Send email notification (unless --no-email flag is set)
+    if args.no_email:
+        print("\n[--no-email] Skipping email notification.")
+    else:
+        # Build date range string from the entries
+        # entries[0] is oldest (first), entries[-1] is newest (last)
+        # .isoformat() converts date object to "YYYY-MM-DD" string
+        start_date = entries[0]["date"].isoformat()
+        end_date = entries[-1]["date"].isoformat()
+        date_range = f"{start_date} to {end_date}"
+
+        print(f"\nSending email notification...")
+        if send_summary_email(summary, date_range):
+            print("Email sent! Check robots@das.llc for the summary.")
+        else:
+            # Email failure shouldn't fail the whole run - the draft is saved
+            print("Warning: Email failed to send, but draft was saved locally.")
 
     return 0
 

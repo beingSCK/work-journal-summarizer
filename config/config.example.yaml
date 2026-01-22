@@ -1,0 +1,73 @@
+# Work Journal Summarizer Configuration
+# ======================================
+#
+# Copy this file to config.yaml and customize as needed.
+# All settings have sensible defaults - you only need to set what you want to change.
+#
+# This file is committed to git (as an example).
+# config.yaml is gitignored (contains your actual settings).
+
+# ---------------------------------------------------------------------------
+# Journal Settings
+# ---------------------------------------------------------------------------
+# Where to find your work journal and how to identify summaries.
+
+journal:
+  # Path to work journal directory (~ is expanded to home directory)
+  path: "~/code-directory-top/_meta/work-journal"
+
+  # Prefix used in summary filenames (e.g., "2026-01-08-SUMMARY-14-days-DRAFT.md")
+  summary_prefix: "SUMMARY-14-days"
+
+  # How many days back to look for entries when generating a summary
+  lookback_days: 14
+
+
+# ---------------------------------------------------------------------------
+# Email Settings
+# ---------------------------------------------------------------------------
+# Where to send summary emails and confirmation messages.
+
+email:
+  # Recipient for summary emails (your personal email)
+  to: "your-email@example.com"
+
+  # Sender address (must match the Gmail account used for OAuth)
+  from: "your-bot@example.com"
+
+  # Prefix added to email subjects (helps with filtering)
+  subject_prefix: "[Work Journal]"
+
+
+# ---------------------------------------------------------------------------
+# Anthropic API Settings
+# ---------------------------------------------------------------------------
+# Models used for AI tasks. Updated to latest versions (Jan 2026).
+
+anthropic:
+  # Model for generating summaries (needs good reasoning)
+  # claude-sonnet-4-5 is the latest Sonnet, best for coding/agents
+  summary_model: "claude-sonnet-4-5"
+
+  # Model for classifying email replies (needs to be fast + cheap)
+  # claude-haiku-4-5 is 4-5x faster than Sonnet at fraction of cost
+  classify_model: "claude-haiku-4-5"
+
+  # Maximum tokens in summary response
+  max_tokens: 4096
+
+
+# ---------------------------------------------------------------------------
+# Secrets Paths
+# ---------------------------------------------------------------------------
+# Where credentials are stored. Change if you use a different structure.
+
+secrets:
+  # Base path for all secrets
+  base_path: "~/.secrets"
+
+  # Subfolder for shared credentials (used by multiple projects)
+  shared_folder: "shared"
+
+  # Subfolder for this project's credentials
+  project_folder: "work-journal-summarizer"

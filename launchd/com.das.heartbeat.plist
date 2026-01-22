@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    launchd Configuration for Daily Heartbeat
+    ==========================================
+
+    Runs at 1:00 AM daily to:
+    1. Check for stale checkpoint files (forgot to run /wrap-up)
+    2. Auto-wrapup: synthesize checkpoints into journal entry
+    3. Send heartbeat email with:
+       - Yesterday's work summary
+       - System status (auto-wrapup ran or journal existed)
+       - Fun fact to make it worth opening
+
+    Why 1am?
+    - Late enough that yesterday's work is definitely done
+    - Early enough to not interfere with morning routines
+    - Any auto-generated journal entry is ready before you wake up
+
+    Managing this job:
+    - See loaded jobs: launchctl list | grep das
+    - Disable: launchctl unload ~/Library/LaunchAgents/com.das.heartbeat.plist
+    - Re-enable: launchctl load ~/Library/LaunchAgents/com.das.heartbeat.plist
+    - Test manually: launchctl start com.das.heartbeat
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.das.heartbeat</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/seanckeegan/.local/bin/uv</string>
+        <string>run</string>
+        <string>python</string>
+        <string>-m</string>
+        <string>summarizer</string>
+        <string>--heartbeat</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
+    </dict>
+
+    <!--
+        StartCalendarInterval: Run at 1:00 AM daily
+        - Hour: 1 = 1:00 AM (24-hour format)
+        - Minute: 0 = on the hour
+    -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>1</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+    launchd Configuration for Reply Processing
+    ==========================================
+
+    This is a companion job to the main summarizer.
+    It runs hourly to check for email replies and process them.
+
+    Why a separate job?
+    - Different schedule (hourly vs daily)
+    - Different mode (- -check-replies vs regular)
+    - Can be disabled independently if the feedback loop is too chatty
+
+    Managing this job:
+    - See loaded jobs: launchctl list | grep work-journal
+    - Disable: launchctl unload ~/Library/LaunchAgents/com.sck.work-journal-summarizer-replies.plist
+    - Re-enable: launchctl load ~/Library/LaunchAgents/com.sck.work-journal-summarizer-replies.plist
+
+    See com.sck.work-journal-summarizer.plist for detailed explanations
+    of each key - this file uses the same structure.
+-->
+<plist version="1.0">
+<dict>
+    <!-- Different label for the reply checker -->
+    <key>Label</key>
+    <string>com.sck.work-journal-summarizer-replies</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/seanckeegan/.local/bin/uv</string>
+        <string>run</string>
+        <string>python</string>
+        <string>-m</string>
+        <string>summarizer</string>
+        <!-- This flag runs in reply-processing mode -->
+        <string>--check-replies</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
+    </dict>
+
+    <!--
+        StartInterval: Run every N seconds
+        - 3600 seconds = 1 hour
+        - Alternative to StartCalendarInterval for regular intervals
+        - Simpler when you just want "every X minutes/hours"
+    -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Same log file as main job - easier to see everything together -->
+    <key>StandardOutPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>
