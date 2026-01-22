@@ -380,13 +380,13 @@ def finalize_draft(date_str: str | None = None) -> bool:
     Returns:
         True if a draft was finalized, False if no draft found
     """
-    from .journal import get_journal_path
+    from .journal import get_summaries_path
 
-    journal_path = get_journal_path()
+    summaries_path = get_summaries_path()
 
-    # Find draft files
+    # Find draft files in the periodic-summaries/ subfolder
     # glob() returns an iterator of Path objects matching the pattern
-    drafts = list(journal_path.glob("*-SUMMARY-*-DRAFT.md"))
+    drafts = list(summaries_path.glob("*-SUMMARY-*-DRAFT.md"))
 
     if not drafts:
         print("No draft files found to finalize.")
