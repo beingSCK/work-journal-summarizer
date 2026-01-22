@@ -21,6 +21,9 @@ uv run python -m summarizer --dry-run
 # Check for and process email replies
 uv run python -m summarizer --check-replies
 
+# Daily heartbeat: auto-wrapup stale checkpoints, send status email
+uv run python -m summarizer --heartbeat
+
 # Custom date range
 uv run python -m summarizer --days 7
 ```
@@ -34,6 +37,7 @@ src/summarizer/
 ├── summarize.py         # Claude API integration, prompt construction
 ├── email_sender.py      # Gmail API + OAuth for sending/reading emails
 ├── reply_processor.py   # Classifies replies with Haiku, takes action
+├── heartbeat.py         # Daily heartbeat: auto-wrapup + status email
 └── config.py            # Configuration management with defaults + YAML
 ```
 
@@ -41,9 +45,14 @@ src/summarizer/
 
 **Reply flow**: main.py --check-replies → reply_processor.py → Haiku classification → action + confirmation email
 
+**Heartbeat flow**: main.py --heartbeat → heartbeat.py (check stale checkpoints, auto-wrapup, fun fact) → email_sender.py
+
 ## Key Paths
 
-- Work journal source: Configured in `config/config.yaml` (default: `~/code_directory_top/_meta/work-journal/`)
+- Work journal base: Configured in `config/config.yaml` (default: `~/code-directory-top/_meta/work-journal/`)
+  - Daily entries: `{base}/daily-entries/` - Journal entries (YYYY-MM-DD.md)
+  - Summaries: `{base}/periodic-summaries/` - Bi-weekly summaries
+  - Staging: `{base}/daily-staging/` - Checkpoint staging area
 - Anthropic API key: `~/.secrets/shared/anthropic-api-key.txt`
 - Gmail OAuth credentials: `~/.secrets/work-journal-summarizer/gmail-client-secret.json`
 - Gmail tokens: `~/.secrets/work-journal-summarizer/gmail-token.json`
@@ -52,17 +61,18 @@ src/summarizer/
 ## Conventions
 
 - Summary files: `YYYY-MM-DD-SUMMARY-14-days-DRAFT.md` (draft), `YYYY-MM-DD-SUMMARY-14-days.md` (finalized)
-- Summaries are saved to the work-journal folder alongside regular entries
+- Summaries are saved to the `periodic-summaries/` subfolder
 - Uses `uv` for package management
 - Extensive inline comments for educational purposes
 
 ## Scheduling
 
-Two launchd jobs in `launchd/`:
-- Daily at 10am: Check if summary needed, generate and email
-- Hourly: Check for email replies and process
+Three launchd jobs in `launchd/`:
+- `com.sck.work-journal-summarizer` - Daily at 10am: Check if summary needed, generate and email
+- `com.sck.work-journal-summarizer-replies` - Hourly: Check for email replies and process
+- `com.das.heartbeat` - Daily at 1am: Auto-wrapup stale checkpoints, send heartbeat email
 
 Install: `./scripts/install-scheduled-jobs.sh`
 Uninstall: `./scripts/uninstall-scheduled-jobs.sh`
 
-**Note**: The scheduled timing (10am daily, hourly) has not been tested yet. Manual invocation (`uv run python -m summarizer`) has been verified working.
+Verify: `launchctl list | grep -E 'work-journal|das'`
