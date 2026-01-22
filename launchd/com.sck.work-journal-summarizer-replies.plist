@@ -38,12 +38,12 @@
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/seanckeegan/code_directory_top/work-journal-summarizer</string>
+    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
 
     <key>EnvironmentVariables</key>
     <dict>
         <key>PYTHONPATH</key>
-        <string>/Users/seanckeegan/code_directory_top/work-journal-summarizer/src</string>
+        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
     </dict>
 
     <!--

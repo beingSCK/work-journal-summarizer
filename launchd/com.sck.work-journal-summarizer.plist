@@ -58,7 +58,7 @@
         - The uv command needs to find pyproject.toml
     -->
     <key>WorkingDirectory</key>
-    <string>/Users/seanckeegan/code_directory_top/work-journal-summarizer</string>
+    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
 
     <!--
         EnvironmentVariables: Set environment for the job
@@ -68,7 +68,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PYTHONPATH</key>
-        <string>/Users/seanckeegan/code_directory_top/work-journal-summarizer/src</string>
+        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
     </dict>
 
     <!--
