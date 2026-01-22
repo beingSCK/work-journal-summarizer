@@ -189,9 +189,9 @@ def generate_summary(
     return message.content[0].text
 
 
-def save_draft(summary: str, journal_path: Path, entries: list[dict]) -> Path:
+def save_draft(summary: str, entries: list[dict], summaries_path: Path | None = None) -> Path:
     """
-    Save the summary as a draft file in the journal directory.
+    Save the summary as a draft file in the periodic-summaries directory.
 
     Syntax notes:
     - Path objects support / operator for joining paths
@@ -200,16 +200,22 @@ def save_draft(summary: str, journal_path: Path, entries: list[dict]) -> Path:
 
     Args:
         summary: The generated summary text.
-        journal_path: Path to the work-journal directory.
         entries: The entries that were summarized (to get the date range).
+        summaries_path: Override the default summaries location (useful for testing).
 
     Returns:
         The Path to the saved draft file.
     """
+    if summaries_path is None:
+        summaries_path = config.get_summaries_path()
+
+    # Ensure the summaries directory exists
+    summaries_path.mkdir(parents=True, exist_ok=True)
+
     # Use today's date for the filename (when the summary was generated)
     today = date.today().isoformat()
     filename = f"{today}-SUMMARY-14-days-DRAFT.md"
-    draft_path = journal_path / filename
+    draft_path = summaries_path / filename
 
     draft_path.write_text(summary)
     return draft_path

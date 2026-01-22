@@ -30,6 +30,21 @@ def get_journal_path() -> Path:
     return config.get_journal_path()
 
 
+def get_entries_path() -> Path:
+    """Return the path to daily journal entries (daily-entries/)."""
+    return config.get_entries_path()
+
+
+def get_summaries_path() -> Path:
+    """Return the path to periodic summaries (periodic-summaries/)."""
+    return config.get_summaries_path()
+
+
+def get_staging_path() -> Path:
+    """Return the path to checkpoint staging (daily-staging/)."""
+    return config.get_staging_path()
+
+
 def parse_date_from_filename(filename: str) -> date | None:
     """
     Extract date from a journal filename like '2026-01-07.md'.
@@ -67,7 +82,7 @@ def parse_date_from_filename(filename: str) -> date | None:
     return None
 
 
-def find_latest_summary(journal_path: Path) -> date | None:
+def find_latest_summary(summaries_path: Path | None = None) -> date | None:
     """
     Find the most recent summary file and return its date.
 
@@ -76,17 +91,26 @@ def find_latest_summary(journal_path: Path) -> date | None:
 
     Syntax notes:
     - re.compile() pre-compiles a regex pattern for reuse (minor performance benefit)
-    - journal_path.iterdir() yields each item in the directory as a Path object
+    - summaries_path.iterdir() yields each item in the directory as a Path object
     - file.name gives just the filename (not the full path)
+
+    Args:
+        summaries_path: Override the default summaries location (useful for testing)
 
     Returns:
         The date of the most recent summary, or None if no summaries exist.
     """
+    if summaries_path is None:
+        summaries_path = get_summaries_path()
+
     # The .* near the end matches optional suffixes like "-DRAFT"
     summary_pattern = re.compile(r"^(\d{4})-(\d{2})-(\d{2})-SUMMARY-14-days.*\.md$")
     latest = None  # Will hold the most recent summary date we find
 
-    for file in journal_path.iterdir():
+    if not summaries_path.exists():
+        return None
+
+    for file in summaries_path.iterdir():
         match = summary_pattern.match(file.name)
         if match:
             summary_date = date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
@@ -97,26 +121,20 @@ def find_latest_summary(journal_path: Path) -> date | None:
     return latest
 
 
-def needs_summary(journal_path: Path | None = None, lookback_days: int = 14) -> bool:
+def needs_summary(lookback_days: int = 14) -> bool:
     """
     Check if a new summary is needed (no summary within lookback period).
 
     Syntax notes:
-    - `Path | None = None` means: type is Path-or-None, default value is None
-    - This pattern lets callers omit the argument while allowing explicit override for testing
     - `int = 14` means: type is int, default value is 14
 
     Args:
-        journal_path: Override the default journal location (useful for testing)
         lookback_days: How many days back to check for existing summaries
 
     Returns:
         True if we should generate a new summary, False if a recent one exists.
     """
-    if journal_path is None:
-        journal_path = get_journal_path()
-
-    latest_summary = find_latest_summary(journal_path)
+    latest_summary = find_latest_summary()
     if latest_summary is None:
         return True  # No summaries exist, definitely need one
 
@@ -126,7 +144,7 @@ def needs_summary(journal_path: Path | None = None, lookback_days: int = 14) -> 
     return days_since_summary >= lookback_days
 
 
-def gather_entries(journal_path: Path | None = None, lookback_days: int = 14) -> list[dict]:
+def gather_entries(entries_path: Path | None = None, lookback_days: int = 14) -> list[dict]:
     """
     Gather journal entries from the last N days.
 
@@ -136,22 +154,25 @@ def gather_entries(journal_path: Path | None = None, lookback_days: int = 14) ->
     - timedelta(days=14) creates a duration of 14 days
 
     Args:
-        journal_path: Override the default journal location (useful for testing)
+        entries_path: Override the default entries location (useful for testing)
         lookback_days: How many days of entries to gather
 
     Returns:
         List of dicts with 'date', 'filename', and 'content' keys,
         sorted by date ascending (oldest first for chronological reading).
     """
-    if journal_path is None:
-        journal_path = get_journal_path()
+    if entries_path is None:
+        entries_path = get_entries_path()
 
     # Calculate the oldest date we'll include
     # date.today() returns today's date; subtracting timedelta shifts it back
     cutoff = date.today() - timedelta(days=lookback_days)
     entries = []
 
-    for file in journal_path.iterdir():
+    if not entries_path.exists():
+        return entries
+
+    for file in entries_path.iterdir():
         entry_date = parse_date_from_filename(file.name)
 
         # Skip files that don't match the date pattern (like SUMMARY files)

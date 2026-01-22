@@ -70,9 +70,13 @@ def get_config_path() -> Path:
 
 DEFAULT_CONFIG = {
     "journal": {
-        "path": "~/code_directory_top/_meta/work-journal",
+        "path": "~/code-directory-top/_meta/work-journal",
         "summary_prefix": "SUMMARY-14-days",
         "lookback_days": 14,
+        # Subfolder structure (new Jan 2026)
+        "entries_subfolder": "daily-entries",
+        "summaries_subfolder": "periodic-summaries",
+        "staging_subfolder": "daily-staging",
     },
     "email": {
         "to": "sean@das.llc",
@@ -271,6 +275,21 @@ def expand_path(path_str: str) -> Path:
 def get_journal_path() -> Path:
     """Get the configured journal path as a Path object."""
     return expand_path(get("journal.path"))
+
+
+def get_entries_path() -> Path:
+    """Get the path to daily journal entries (daily-entries/)."""
+    return get_journal_path() / get("journal.entries_subfolder", "daily-entries")
+
+
+def get_summaries_path() -> Path:
+    """Get the path to periodic summaries (periodic-summaries/)."""
+    return get_journal_path() / get("journal.summaries_subfolder", "periodic-summaries")
+
+
+def get_staging_path() -> Path:
+    """Get the path to checkpoint staging (daily-staging/)."""
+    return get_journal_path() / get("journal.staging_subfolder", "daily-staging")
 
 
 def get_secrets_base_path() -> Path:
