@@ -95,17 +95,21 @@ def get_token_path() -> Path:
 # ---------------------------------------------------------------------------
 
 # Scopes define what permissions your app requests.
-# We use the minimal scope needed: just sending emails.
+# We need three scopes for the full workflow:
+#   - gmail.send: Send summary emails and confirmations
+#   - gmail.readonly: Read inbox to find replies to our summaries
+#   - gmail.modify: Mark processed replies as read
 #
 # Available Gmail scopes (from most to least permissive):
 #   - gmail (full access - read, write, delete, send)
 #   - gmail.modify (read, write, but not delete)
 #   - gmail.compose (create drafts and send)
-#   - gmail.send (ONLY send, can't read inbox) <-- We use this
+#   - gmail.send (ONLY send, can't read inbox)
 #   - gmail.readonly (only read, can't send)
 #
-# Principle of least privilege: request only what you need.
-# If this app is compromised, attacker can only send emails, not read them.
+# Security note: If this app is compromised, an attacker could read your
+# inbox and send emails on your behalf. The readonly+modify scopes are
+# necessary for the reply-processing workflow.
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",      # Send emails

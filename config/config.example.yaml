@@ -14,7 +14,7 @@
 
 journal:
   # Path to work journal directory (~ is expanded to home directory)
-  path: "~/code_directory_top/_meta/work-journal"
+  path: "~/code-directory-top/_meta/work-journal"
 
   # Prefix used in summary filenames (e.g., "2026-01-08-SUMMARY-14-days-DRAFT.md")
   summary_prefix: "SUMMARY-14-days"
