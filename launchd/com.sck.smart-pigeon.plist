@@ -14,7 +14,7 @@
     - Used throughout macOS for preferences and configurations
     - Verbose but explicit - every setting is clearly named
 
-    Naming convention: com.sck.work-journal-summarizer
+    Naming convention: com.sck.smart-pigeon
     - "Reverse DNS" style: domain.owner.project
     - Prevents naming conflicts between different apps/developers
     - com = commercial, sck = your identifier, then project name
@@ -22,8 +22,8 @@
 
     How to use this file:
     1. Copy to ~/Library/LaunchAgents/
-    2. Load with: launchctl load ~/Library/LaunchAgents/com.sck.work-journal-summarizer.plist
-    3. Unload with: launchctl unload ~/Library/LaunchAgents/com.sck.work-journal-summarizer.plist
+    2. Load with: launchctl load ~/Library/LaunchAgents/com.sck.smart-pigeon.plist
+    3. Unload with: launchctl unload ~/Library/LaunchAgents/com.sck.smart-pigeon.plist
 
     Where jobs run:
     - ~/Library/LaunchAgents/ = User-level jobs (run when YOU log in)
@@ -34,7 +34,7 @@
 <dict>
     <!-- Label: Unique identifier for this job (must match filename) -->
     <key>Label</key>
-    <string>com.sck.work-journal-summarizer</string>
+    <string>com.sck.smart-pigeon</string>
 
     <!--
         ProgramArguments: The command to run
@@ -58,7 +58,7 @@
         - The uv command needs to find pyproject.toml
     -->
     <key>WorkingDirectory</key>
-    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
+    <string>/Users/seanckeegan/code-directory-top/smart-pigeon</string>
 
     <!--
         EnvironmentVariables: Set environment for the job
@@ -68,7 +68,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PYTHONPATH</key>
-        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
+        <string>/Users/seanckeegan/code-directory-top/smart-pigeon/src</string>
     </dict>
 
     <!--
@@ -90,12 +90,12 @@
         StandardOutPath / StandardErrorPath: Where to log output
         - These capture print() statements and error messages
         - Useful for debugging if something goes wrong
-        - Check with: tail -f ~/Library/Logs/work-journal-summarizer.log
+        - Check with: tail -f ~/Library/Logs/smart-pigeon.log
     -->
     <key>StandardOutPath</key>
-    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <string>/Users/seanckeegan/Library/Logs/smart-pigeon.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <string>/Users/seanckeegan/Library/Logs/smart-pigeon.log</string>
 
     <!--
         RunAtLoad: Run immediately when the job is loaded?

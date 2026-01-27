@@ -1,10 +1,14 @@
-# CLAUDE.md
+# CLAUDE.md - smart-pigeon 🐦
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Purpose
 
-Automated bi-weekly summary generator for work journals. Runs daily via launchd, triggers summary generation if no summary exists for the past 14 days, emails the draft for review, and processes email replies to approve or revise.
+**smart-pigeon** (formerly work-journal-summarizer) is an autonomous work journal management system:
+- Bi-weekly summary generation for work journals
+- Daily heartbeat emails with auto-wrapup + news synthesis
+- Email reply processing for summary approval/revision
+- Runs on VPS (systemd) for 24/7 operation, with Mac launchd for local development
 
 ## Commands
 
@@ -54,8 +58,8 @@ src/summarizer/
   - Summaries: `{base}/periodic-summaries/` - Bi-weekly summaries
   - Staging: `{base}/daily-staging/` - Checkpoint staging area
 - Anthropic API key: `~/.secrets/shared/anthropic-api-key.txt`
-- Gmail OAuth credentials: `~/.secrets/work-journal-summarizer/gmail-client-secret.json`
-- Gmail tokens: `~/.secrets/work-journal-summarizer/gmail-token.json`
+- Gmail OAuth credentials: `~/.secrets/smart-pigeon/gmail-client-secret.json`
+- Gmail tokens: `~/.secrets/smart-pigeon/gmail-token.json`
 - Config: `config/config.yaml`
 
 ## Conventions
@@ -67,12 +71,18 @@ src/summarizer/
 
 ## Scheduling
 
+### Mac (launchd) - for local development
 Three launchd jobs in `launchd/`:
-- `com.sck.work-journal-summarizer` - Daily at 10am: Check if summary needed, generate and email
-- `com.sck.work-journal-summarizer-replies` - Hourly: Check for email replies and process
+- `com.sck.smart-pigeon` - Daily at 10am: Check if summary needed, generate and email
+- `com.sck.smart-pigeon-replies` - Hourly: Check for email replies and process
 - `com.das.heartbeat` - Daily at 1am: Auto-wrapup stale checkpoints, send heartbeat email
 
 Install: `./scripts/install-scheduled-jobs.sh`
 Uninstall: `./scripts/uninstall-scheduled-jobs.sh`
+Verify: `launchctl list | grep -E 'smart-pigeon|das'`
 
-Verify: `launchctl list | grep -E 'work-journal|das'`
+### VPS (systemd) - for 24/7 operation
+User service files in `systemd/`:
+- `smart-pigeon.timer` + `smart-pigeon.service` - Daily at 1am UTC: Full heartbeat
+
+Managed via `systemctl --user`

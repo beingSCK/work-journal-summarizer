@@ -14,17 +14,17 @@
 
     Managing this job:
     - See loaded jobs: launchctl list | grep work-journal
-    - Disable: launchctl unload ~/Library/LaunchAgents/com.sck.work-journal-summarizer-replies.plist
-    - Re-enable: launchctl load ~/Library/LaunchAgents/com.sck.work-journal-summarizer-replies.plist
+    - Disable: launchctl unload ~/Library/LaunchAgents/com.sck.smart-pigeon-replies.plist
+    - Re-enable: launchctl load ~/Library/LaunchAgents/com.sck.smart-pigeon-replies.plist
 
-    See com.sck.work-journal-summarizer.plist for detailed explanations
+    See com.sck.smart-pigeon.plist for detailed explanations
     of each key - this file uses the same structure.
 -->
 <plist version="1.0">
 <dict>
     <!-- Different label for the reply checker -->
     <key>Label</key>
-    <string>com.sck.work-journal-summarizer-replies</string>
+    <string>com.sck.smart-pigeon-replies</string>
 
     <key>ProgramArguments</key>
     <array>
@@ -38,12 +38,12 @@
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer</string>
+    <string>/Users/seanckeegan/code-directory-top/smart-pigeon</string>
 
     <key>EnvironmentVariables</key>
     <dict>
         <key>PYTHONPATH</key>
-        <string>/Users/seanckeegan/code-directory-top/work-journal-summarizer/src</string>
+        <string>/Users/seanckeegan/code-directory-top/smart-pigeon/src</string>
     </dict>
 
     <!--
@@ -57,9 +57,9 @@
 
     <!-- Same log file as main job - easier to see everything together -->
     <key>StandardOutPath</key>
-    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <string>/Users/seanckeegan/Library/Logs/smart-pigeon.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/seanckeegan/Library/Logs/work-journal-summarizer.log</string>
+    <string>/Users/seanckeegan/Library/Logs/smart-pigeon.log</string>
 
     <key>RunAtLoad</key>
     <false/>

@@ -1,9 +1,22 @@
-# HANDOFF - Work Journal Summarizer
-_Last updated: 2026-01-22_
+# HANDOFF - smart-pigeon 🐦
+_Last updated: 2026-01-27_
 
 ## Session Recap
 
-**2026-01-22: Full automation deployed**
+**2026-01-27: Renamed to smart-pigeon + VPS deployment**
+- Renamed project: work-journal-summarizer → smart-pigeon
+- GitHub repo renamed via `gh repo rename`
+- Updated all references in CLAUDE.md files, HANDOFF.md, launchd plists
+- Deploying to VPS with git-based sync for work-journal and claude-steering docs
+
+**2026-01-22 (PM): Reply processor bug fix + first PR**
+- Diagnosed bug: `finalize_draft()` searched wrong directory (base instead of `periodic-summaries/`)
+- Fixed and manually finalized the pending summary draft
+- Created PR #1 with all uncommitted work (6 commits)
+- Ran 5-agent code review, found 2 issues (config path, stale OAuth comment)
+- Fixed issues, merged to main: https://github.com/beingSCK/smart-pigeon/pull/1
+
+**2026-01-22 (AM): Full automation deployed**
 - Fixed path bug (`code_directory_top` → `code-directory-top`) in config + launchd plists
 - Reorganized work-journal folder: `daily-entries/`, `daily-staging/`, `periodic-summaries/`
 - Built heartbeat module with "News Vibe" feature (real RSS headlines, not hallucinated facts)
@@ -16,26 +29,39 @@ _Last updated: 2026-01-22_
 | Journal reading | ✅ Complete (updated for subfolder structure) |
 | Claude summarization | ✅ Complete |
 | Gmail email sending | ✅ Complete |
-| Reply processing | ✅ Complete |
-| Heartbeat module | ✅ **NEW** - Daily email with auto-wrapup + news |
+| Reply processing | ✅ Complete (fixed `finalize_draft` path bug) |
+| Heartbeat module | ✅ Daily email with auto-wrapup + news |
 | Config system | ✅ Complete (fixed paths) |
-| launchd scheduling | ✅ **INSTALLED** |
+| Mac launchd scheduling | ✅ Installed (but Mac sleeps at 1am) |
+| VPS systemd scheduling | 🚧 In progress |
 
-**All known issues resolved.**
+## Scheduling
 
-## launchd Jobs Running
+### Mac (launchd)
 
 ```bash
-launchctl list | grep -E 'sck|das'
+launchctl list | grep -E 'smart-pigeon|das'
 ```
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|
-| `com.sck.work-journal-summarizer` | 10am daily | Bi-weekly summary generation |
-| `com.sck.work-journal-summarizer-replies` | Hourly | Process email replies |
+| `com.sck.smart-pigeon` | 10am daily | Bi-weekly summary generation |
+| `com.sck.smart-pigeon-replies` | Hourly | Process email replies |
 | `com.das.heartbeat` | 1am daily | Auto-wrapup + news vibe email |
 
-**Logs:** `tail -f ~/Library/Logs/work-journal-summarizer.log`
+**Logs:** `tail -f ~/Library/Logs/smart-pigeon.log`
+
+### VPS (systemd)
+
+```bash
+systemctl --user list-timers
+```
+
+| Timer | Schedule | Purpose |
+|-------|----------|---------|
+| `smart-pigeon.timer` | 1am UTC daily | Full heartbeat (auto-wrapup + news) |
+
+**Logs:** `journalctl --user -u smart-pigeon.service`
 
 ## Heartbeat Module Details
 
@@ -48,7 +74,7 @@ The heartbeat (`heartbeat.py`) runs at 1am and:
 
 **Why news instead of fun facts:** LLMs hallucinate "facts" even when asked to cite sources. RSS feeds provide ground truth; Claude synthesizes. Each component does what it's good at.
 
-## Folder Structure (New)
+## Folder Structure
 
 ```
 _meta/work-journal/
@@ -66,27 +92,30 @@ uv run python -m summarizer --force        # Force summary generation
 uv run python -m summarizer --heartbeat    # Run daily heartbeat
 uv run python -m summarizer --check-replies # Process email replies
 
-# launchd management
+# Mac launchd management
 launchctl start com.das.heartbeat          # Test heartbeat now
 ./scripts/uninstall-scheduled-jobs.sh      # Remove all jobs
 ./scripts/install-scheduled-jobs.sh        # Reinstall all jobs
+
+# VPS systemd management
+systemctl --user start smart-pigeon.service  # Test heartbeat now
+systemctl --user status smart-pigeon.timer   # Check timer status
 ```
 
 ## Recommended Next Action
 
-**Verify automation over 24-48 hours:**
-1. Tomorrow at 1am: Heartbeat email should arrive automatically
-2. Check logs if it doesn't: `tail ~/Library/Logs/work-journal-summarizer.log`
-3. In ~14 days: Bi-weekly summary should trigger at 10am
-
-The system is fully operational. No action needed unless something breaks.
+**Complete VPS deployment:**
+1. Clone smart-pigeon to VPS
+2. Transfer secrets (Anthropic key, Gmail OAuth tokens)
+3. Set up systemd timer
+4. Verify heartbeat email from VPS
 
 ## Future Enhancements (Lower Priority)
 
 - **HTML email templates**: Convert markdown to styled HTML
 - **Batch API**: 50% cost savings (non-urgent, current costs are minimal)
 - **Additional news sources**: Add/swap feeds as preferences evolve
-- **Dashboard**: Web UI for viewing journals + summaries (Phase 4 of Work Continuity roadmap)
+- **Dashboard**: Web UI for viewing journals + summaries
 
 ## Architecture Quick Reference
 
@@ -95,7 +124,7 @@ src/summarizer/
 ├── main.py              # CLI entry point
 ├── journal.py           # Reads work-journal/ subfolders
 ├── summarize.py         # Claude API for summaries
-├── heartbeat.py         # NEW: Daily heartbeat + auto-wrapup
+├── heartbeat.py         # Daily heartbeat + auto-wrapup
 ├── email_sender.py      # Gmail OAuth + sending
 ├── reply_processor.py   # Classifies replies with Haiku
 └── config.py            # Centralized configuration

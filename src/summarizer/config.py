@@ -1,5 +1,5 @@
 """
-Configuration management for work-journal-summarizer.
+Configuration management for smart-pigeon (formerly work-journal-summarizer).
 
 This module handles loading settings from config.yaml with sensible defaults.
 The config file is optional - everything works with defaults for quick setup.
@@ -94,7 +94,7 @@ DEFAULT_CONFIG = {
     "secrets": {
         "base_path": "~/.secrets",
         "shared_folder": "shared",
-        "project_folder": "work-journal-summarizer",
+        "project_folder": "smart-pigeon",
     },
 }
 
@@ -303,7 +303,7 @@ def get_shared_secrets_path() -> Path:
 
 
 def get_project_secrets_path() -> Path:
-    """Get this project's secrets path (~/.secrets/work-journal-summarizer/)."""
+    """Get this project's secrets path (~/.secrets/smart-pigeon/)."""
     return get_secrets_base_path() / get("secrets.project_folder")
 
 
